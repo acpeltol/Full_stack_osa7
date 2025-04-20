@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { BrowserRouter as Router, Route, Routes, Link, useMatch, useParams , useNavigate } from 'react-router-dom'
+import  { useField } from './hooks/index'
 
 const Menu = () => {
   const padding = {
@@ -77,31 +78,59 @@ const Anecdote = ({ anecdotes }) => {
 }
 
 const CreateNew = (props) => {
-  const [content, setContent] = useState('')
-  const [author, setAuthor] = useState('')
-  const [info, setInfo] = useState('')
+  // const [content, setContent] = useState('')
+  // const [author, setAuthor] = useState('')
+  // const [info, setInfo] = useState('')
+
+  const content = useField('text')
+  const author = useField('text')
+  const info = useField('text')
+
+  const { reset: resetCont, ...inputCont } = content;
+  const { reset: resetAut, ...inputAut } = author;
+  const { reset: resetInfo, ...inputInfo } = info;
 
   const navigate = useNavigate()
+
+  const handlereseret = (e) => {
+    e.preventDefault()
+    // content.reset()
+    // author.reset()
+    // info.reset()
+    resetAut()
+    resetCont()
+    resetInfo()
+  }
 
 
   const handleSubmit = (e) => {
     e.preventDefault()
     props.addNew({
-      content,
-      author,
-      info,
+      content: content.value,
+      author: author.value,
+      info: info.value,
       votes: 0
     })
 
-    props.setNotification(`a new anecdote ${content} created!`)
+    props.setNotification(`a new anecdote ${content.value} created!`)
     setTimeout(() => {
       props.setNotification('')
     }, 5000)
 
     navigate('/')
-    setContent('')
-    setAuthor('')
-    setInfo('')
+
+    // content.reset()
+    // author.reset()
+    // info.reset()
+    resetAut()
+    resetCont()
+    resetInfo()
+
+
+
+    // setContent('')
+    // setAuthor('')
+    // setInfo('')
   }
 
   return (
@@ -110,18 +139,41 @@ const CreateNew = (props) => {
       <form onSubmit={handleSubmit}>
         <div>
           content
-          <input name='content' value={content} onChange={(e) => setContent(e.target.value)} />
+          {/* <input name='content'
+           value={content} 
+           onChange={(e) => setContent(e.target.value)} /> */}
+          <input {...inputCont} />
+          {/* <input 
+          type={content.type}
+           value={content.value}
+           onChange={content.onChange} /> */}
+
         </div>
         <div>
           author
-          <input name='author' value={author} onChange={(e) => setAuthor(e.target.value)} />
+          {/* <input name='author' 
+          value={author} 
+          onChange={(e) => setAuthor(e.target.value)} /> */}
+          <input {...inputAut} />
+          {/* <input 
+          type={author.type}
+          value={author.value}
+          onChange={author.onChange} /> */}
         </div>
         <div>
           url for more info
-          <input name='info' value={info} onChange={(e)=> setInfo(e.target.value)} />
+          {/* <input name='info' 
+          value={info} 
+          onChange={(e)=> setInfo(e.target.value)} /> */}
+          <input {...inputInfo} />
+          {/* <input 
+          type={info.type}
+          value={info.value}
+          onChange={info.onChange} /> */}
         </div>
         <button>create</button>
       </form>
+      <button onClick={handlereseret}>reset</button>
     </div>
   )
 
