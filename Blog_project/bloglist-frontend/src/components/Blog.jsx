@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 
-const Blog = ({ blog , update , onDelete , user }) => {
+import { likeBlog , deleteBlog } from '../reducers/blogReducer'
+import { setNotification } from '../reducers/nootificationReducer'
+
+
+const Blog = ({ blog , user }) => {
+  const dispatch = useDispatch()
 
   const [fullVisible, setFullVisible] = useState(false)
 
@@ -19,25 +25,40 @@ const Blog = ({ blog , update , onDelete , user }) => {
     marginBottom: 5
   }
 
-  const updateBlog = () => {
+  const updateBlog = async () => {
 
-    const info =  {
-      'id' : blog.id,
-      'user': blog.user.id,
-      'likes' : blog.likes + 1,
-      'author': blog.author,
-      'title': blog.title,
-      'url' : blog.url
+    try{
+
+      const info =  {
+        'id' : blog.id,
+        'user': blog.user.id,
+        'likes' : blog.likes + 1,
+        'author': blog.author,
+        'title': blog.title,
+        'url' : blog.url
+      }
+
+      dispatch(likeBlog(info))
+
+      dispatch(setNotification(`you liked ${blog.title}`))
+
+    } catch (exception){
+      console.log('error', exception)
+      dispatch(setNotification('error liking blog'))
     }
-
-    update(info)
   }
 
-  const deleteBlog = () => {
+  const deleteB = async () => {
 
     if (window.confirm('Do you want to delete the blog')) {
       console.log('Delete confirmed')
-      onDelete(blog.id)
+
+      try {
+        await dispatch(deleteBlog(blog.id))
+        dispatch(setNotification(`you deleted ${blog.title}`))
+      } catch (exception) {
+        dispatch(setNotification('error deleting blog'))
+      }
     }
   }
 
@@ -61,7 +82,7 @@ const Blog = ({ blog , update , onDelete , user }) => {
       <p>{blog.user.name}</p>
 
       {
-        user.name === blog.user.name && <button onClick={deleteBlog}>remove</button>
+        user.name === blog.user.name && <button onClick={deleteB}>remove</button>
       }
     </div>
   </>

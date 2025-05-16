@@ -1,24 +1,24 @@
 import { useState, useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import Blog from './components/Blog'
 import AddingForm from './components/Addingform'
 import blogService from './services/blogs'
 import loginService from './services/login'
 import Togglable from './components/Togglable'
 
-const App = () => {
-  const [blogs, setBlogs] = useState([])
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [user, setUser] = useState(null)
-  const [ErrorMessage, setErrorMessage] = useState(null)
+import { setNotification } from './reducers/nootificationReducer'
+import { initializeBlogs } from './reducers/blogReducer'
+import { setUsername } from './reducers/usernameReducer'
+import { setUser } from './reducers/userReducer'
+import { setPassword } from './reducers/passwordReducer'
 
-  useEffect(() => {
-    if (user){
-      blogService.getAll().then(resp =>
-        setBlogs( resp )
-      )
-    }
-  }, [])
+const App = () => {
+  const dispatch = useDispatch()
+  const password = useSelector(state => state.password)
+  const user = useSelector(state => state.user)
+  const username = useSelector(state => state.username)
+  const blogs = useSelector(state => state.blogs)
+  const notification = useSelector(state => state.notification)
 
   useEffect(() => {
     const loggedUser = window.localStorage
@@ -26,7 +26,7 @@ const App = () => {
 
     if (loggedUser) {
       const user = JSON.parse(loggedUser)
-      setUser(user)
+      dispatch(setUser(user))
       blogService.setToken(user.token)
     }
   }, [])
@@ -40,22 +40,16 @@ const App = () => {
         username, password,
       })
 
-      console.log(user)
-
-
       window.localStorage.setItem(
         'loggedBlogaooUSer', JSON.stringify(user)
       )
 
       blogService.setToken(user.token)
-      setUser(user)
-      setUsername('')
-      setPassword('')
+      dispatch(setUser(user))
+      dispatch(setUsername(''))
+      dispatch(setPassword(''))
     } catch (exeption){
-      setErrorMessage('wrong credentials')
-      setTimeout(() => {
-        setErrorMessage(null)
-      }, 5000)
+      dispatch(setNotification('wrong credentials'))
     }
   }
 
@@ -64,77 +58,7 @@ const App = () => {
 
     window.localStorage.clear()
 
-    setUser(null)
-  }
-
-  const addBlog = async (blogObjet) => {
-    console.log(blogObjet)
-
-    try{
-      const one = await blogService.addBlog(blogObjet)
-
-      console.log('hier gut')
-
-      const dogs = await blogService.getAll()
-
-      setBlogs( dogs )
-
-      setErrorMessage('New blog added')
-      setTimeout(() => {
-        setErrorMessage(null)
-      }, 5000)
-
-    }catch (exeption){
-      setErrorMessage('Posting failed')
-      setTimeout(() => {
-        setErrorMessage(null)
-      }, 5000)
-    }
-  }
-
-  const updateBlog = async (blogObjet) => {
-    console.log(blogObjet)
-
-    try{
-      const one = await blogService.update(blogObjet)
-
-      console.log('Blog updating')
-
-      const dogs = await blogService.getAll()
-
-      setBlogs( dogs )
-
-    }catch (exeption){
-      setErrorMessage('Updating failed')
-      setTimeout(() => {
-        setErrorMessage(null)
-      }, 5000)
-    }
-  }
-
-  const deleteBlog = async (id) => {
-    console.log(id)
-
-    try{
-      const one = await blogService.deleteBlo(id)
-
-      console.log('Blog deleting')
-
-      const dogs = await blogService.getAll()
-
-      setBlogs( dogs )
-
-      setErrorMessage('Blog deleted')
-      setTimeout(() => {
-        setErrorMessage(null)
-      }, 5000)
-
-    }catch (exeption){
-      setErrorMessage('Deleting failed')
-      setTimeout(() => {
-        setErrorMessage(null)
-      }, 5000)
-    }
+    dispatch(setUser(null))
   }
 
 
@@ -147,7 +71,7 @@ const App = () => {
             type="text"
             value={username}
             name="Username"
-            onChange={({ target }) => setUsername(target.value)} />
+            onChange={({ target }) => dispatch(setUsername(target.value))} />
         </div>
         <div>
           password
@@ -155,7 +79,7 @@ const App = () => {
             type="password"
             value={password}
             name="Password"
-            onChange={({ target }) => setPassword(target.value)} />
+            onChange={({ target }) => dispatch(setPassword(target.value))} />
         </div>
         <button type="submit">login</button>
       </form></>
@@ -163,9 +87,7 @@ const App = () => {
 
   const showBlogs = () => {
 
-    blogService.getAll().then(blogs =>
-      setBlogs( blogs )
-    )
+    dispatch(initializeBlogs())
 
     return(<>
       <h2>blogs</h2>
@@ -177,18 +99,18 @@ const App = () => {
       </form>
 
       <Togglable buttonLabel='AddForm'>
-        <AddingForm addBlog={addBlog}/>
+        <AddingForm/>
       </Togglable>
 
       {blogs.map(blog =>
-        <Blog key={blog.id} blog={blog} update={updateBlog} onDelete={deleteBlog} user={user}/>
+        <Blog key={blog.id} blog={blog} user={user}/>
       )}
     </> )
   }
 
   return (
     <div>
-      <h1>{ErrorMessage}</h1>
+      <h1>  {notification && <div className="notification">{notification}</div>}</h1>
 
       {!user && loginForm()}
       {user && showBlogs()}
